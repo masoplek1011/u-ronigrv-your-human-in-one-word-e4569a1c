@@ -22,7 +22,12 @@ import { join } from "node:path";
 
 const WORD = "Promptpatron";
 
-function validate(word: string): void {
+// Returns the word after validation, so the value written out is exactly
+// the value that passed every check — a failed check can never leave a
+// different word in the output. Revision: also require letters only.
+// A digit or punctuation mark could make a judge's tokenizer split the
+// entry into more than one word, which would break the one-word rule.
+function validate(word: string): string {
   const chars = [...word];
   if (chars.length < 1 || chars.length > 30) {
     throw new Error(`word must be 1-30 characters, got ${chars.length}`);
@@ -30,13 +35,14 @@ function validate(word: string): void {
   if (/\s/.test(word)) {
     throw new Error("word must be a single word with no whitespace");
   }
-  if (word.trim() !== word || word.length === 0) {
-    throw new Error("word must not be only whitespace");
+  if (!/^[A-Za-z]+$/.test(word)) {
+    throw new Error("word must contain letters only (no digits or punctuation)");
   }
+  return word;
 }
 
-validate(WORD);
+const VALIDATED_WORD = validate(WORD);
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), WORD, "utf8");
+writeFileSync(join(outDir, "entry.txt"), VALIDATED_WORD, "utf8");
